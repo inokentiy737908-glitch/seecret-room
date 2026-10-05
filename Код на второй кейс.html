@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Панель управления</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      background: #101820;
+      color: #f2f5f7;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .laboratory {
+      width: min(900px, 100%);
+    }
+
+    h1 {
+      text-align: center;
+      margin: 0 0 8px;
+      font-size: 32px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #9eabb6;
+      margin-bottom: 25px;
+    }
+
+    .panel {
+      background: #1b2732;
+      border: 2px solid #344553;
+      border-radius: 18px;
+      padding: 25px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+    }
+
+    .panel-title {
+      text-align: center;
+      font-size: 20px;
+      margin-bottom: 22px;
+      color: #cbd6df;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+
+    .control {
+      background: #253541;
+      border: 1px solid #405361;
+      border-radius: 14px;
+      padding: 20px;
+      text-align: center;
+      transition: border-color 0.3s, background 0.3s;
+    }
+
+    .control.active {
+      background: #203b37;
+      border-color: #4f9180;
+    }
+
+    .icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .control h2 {
+      font-size: 18px;
+      margin: 0 0 8px;
+    }
+
+    .state {
+      font-size: 14px;
+      color: #9eabb6;
+      margin-bottom: 15px;
+      min-height: 20px;
+    }
+
+    .control.active .state {
+      color: #aee2d4;
+    }
+
+    button {
+      width: 100%;
+      padding: 11px 15px;
+      border: none;
+      border-radius: 9px;
+      background: #536b7b;
+      color: white;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    button:hover:not(:disabled) {
+      background: #668294;
+      transform: translateY(-2px);
+    }
+
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .message {
+      min-height: 58px;
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: 11px;
+      background: #253541;
+      border: 1px solid #405361;
+      text-align: center;
+      font-size: 17px;
+    }
+
+    .message.warning {
+      background: #403723;
+      border-color: #806b3d;
+      color: #f0d994;
+    }
+
+    .message.success {
+      background: #203b37;
+      border-color: #4f9180;
+      color: #bce8da;
+    }
+
+    .restart {
+      width: auto;
+      display: block;
+      margin: 18px auto 0;
+      padding: 11px 25px;
+      background: #485c6c;
+    }
+
+    @media (max-width: 700px) {
+      .controls {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 27px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="laboratory">
+
+    <h1>🚀 Панель управления</h1>
+
+    <div class="subtitle">
+      Подготовь космическую станцию к запуску
+    </div>
+
+    <section class="panel">
+
+      <div class="panel-title">
+        СИСТЕМЫ КОСМИЧЕСКОЙ СТАНЦИИ
+      </div>
+
+      <div class="controls">
+
+        <!-- ПИТАНИЕ -->
+        <div class="control" id="powerControl">
+
+          <div class="icon">🔋</div>
+
+          <h2>Питание</h2>
+
+          <div class="state" id="powerState">
+            Выключено
+          </div>
+
+          <button id="powerButton">
+            Включить питание
+          </button>
+
+        </div>
+
+
+        <!-- СИСТЕМА -->
+        <div class="control" id="systemControl">
+
+          <div class="icon">💡</div>
+
+          <h2>Система</h2>
+
+          <div class="state" id="systemState">
+            Неактивна
+          </div>
+
+          <button id="systemButton">
+            Активировать
+          </button>
+
+        </div>
+
+
+        <!-- ДВИГАТЕЛЬ -->
+        <div class="control" id="engineControl">
+
+          <div class="icon">🚀</div>
+
+          <h2>Двигатель</h2>
+
+          <div class="state" id="engineState">
+            Выключен
+          </div>
+
+          <button id="engineButton" disabled>
+            Запустить
+          </button>
+
+        </div>
+
+      </div>
+
+      <div class="message" id="message">
+        Сначала включи питание станции.
+      </div>
+
+      <button class="restart" id="restartButton">
+        🔄 Начать заново
+      </button>
+
+    </section>
+
+  </main>
+
+
+  <script>
+
+    /*
+      СОСТОЯНИЯ СИСТЕМЫ
+    */
+
+    let powerOn = false;
+    let systemActive = false;
+    let engineStarted = false;
+
+
+    /*
+      ЭЛЕМЕНТЫ
+    */
+
+    const powerControl = document.getElementById("powerControl");
+    const systemControl = document.getElementById("systemControl");
+    const engineControl = document.getElementById("engineControl");
+
+    const powerState = document.getElementById("powerState");
+    const systemState = document.getElementById("systemState");
+    const engineState = document.getElementById("engineState");
+
+    const powerButton = document.getElementById("powerButton");
+    const systemButton = document.getElementById("systemButton");
+    const engineButton = document.getElementById("engineButton");
+
+    const message = document.getElementById("message");
+    const restartButton = document.getElementById("restartButton");
+
+
+    /*
+      ВКЛЮЧЕНИЕ ПИТАНИЯ
+    */
+
+    powerButton.addEventListener("click", function () {
+
+      if (powerOn) {
+        return;
+      }
+
+      powerOn = true;
+
+      powerState.textContent = "Включено";
+
+      powerControl.classList.add("active");
+
+      powerButton.textContent = "Питание включено";
+      powerButton.disabled = true;
+
+      message.textContent =
+        "🔋 Питание включено. Теперь активируй систему.";
+
+      message.classList.remove("warning");
+      message.classList.add("success");
+
+    });
+
+
+    /*
+      АКТИВАЦИЯ СИСТЕМЫ
+    */
+
+    systemButton.addEventListener("click", function () {
+
+      /*
+        ПРОВЕРКА:
+
+        Систему нельзя активировать,
+        пока питание выключено.
+      */
+
+      if (!powerOn) {
+
+        message.textContent =
+          "⚠️ Сначала включи питание.";
+
+        message.classList.remove("success");
+        message.classList.add("warning");
+
+        return;
+      }
+
+      if (systemActive) {
+        return;
+      }
+
+      systemActive = true;
+
+      systemState.textContent = "Активна";
+
+      systemControl.classList.add("active");
+
+      systemButton.textContent = "Система активна";
+      systemButton.disabled = true;
+
+      /*
+        Связь объектов:
+
+        Если система активна,
+        двигатель становится доступен.
+      */
+
+      engineButton.disabled = false;
+
+      message.textContent =
+        "💡 Система активна. Теперь можно запустить двигатель.";
+
+      message.classList.remove("warning");
+      message.classList.add("success");
+
+    });
+
+
+    /*
+      ЗАПУСК ДВИГАТЕЛЯ
+    */
+
+    engineButton.addEventListener("click", function () {
+
+      /*
+        Дополнительная защита:
+        двигатель не запускается без активной системы.
+      */
+
+      if (!systemActive) {
+
+        message.textContent =
+          "⚠️ Сначала активируй систему.";
+
+        message.classList.remove("success");
+        message.classList.add("warning");
+
+        return;
+      }
+
+      if (engineStarted) {
+        return;
+      }
+
+      engineStarted = true;
+
+      engineState.textContent = "Запущен";
+
+      engineControl.classList.add("active");
+
+      engineButton.textContent = "Двигатель запущен";
+      engineButton.disabled = true;
+
+      message.textContent =
+        "🚀 Двигатель запущен! Подготовка станции завершена.";
+
+      message.classList.remove("warning");
+      message.classList.add("success");
+
+      restartButton.style.display = "block";
+
+    });
+
+
+    /*
+      НАЧАТЬ ЗАНОВО
+    */
+
+    restartButton.addEventListener("click", function () {
+
+      powerOn = false;
+      systemActive = false;
+      engineStarted = false;
+
+
+      /*
+        Возвращаем состояния объектов.
+      */
+
+      powerState.textContent = "Выключено";
+      systemState.textContent = "Неактивна";
+      engineState.textContent = "Выключен";
+
+
+      /*
+        Возвращаем визуальное состояние.
+      */
+
+      powerControl.classList.remove("active");
+      systemControl.classList.remove("active");
+      engineControl.classList.remove("active");
+
+
+      /*
+        Возвращаем кнопки.
+      */
+
+      powerButton.textContent = "Включить питание";
+      powerButton.disabled = false;
+
+      systemButton.textContent = "Активировать";
+      systemButton.disabled = false;
+
+      engineButton.textContent = "Запустить";
+      engineButton.disabled = true;
+
+
+      /*
+        Возвращаем начальное сообщение.
+      */
+
+      message.textContent =
+        "Сначала включи питание станции.";
+
+      message.classList.remove("success");
+      message.classList.remove("warning");
+
+
+      restartButton.style.display = "none";
+
+    });
+
+  </script>
+
+</body>
+</html>

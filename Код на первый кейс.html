@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Секретная комната</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      background: #18202b;
+      color: #f4f7fb;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .game {
+      width: min(900px, 100%);
+    }
+
+    h1 {
+      text-align: center;
+      margin: 0 0 10px;
+      font-size: 32px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #aeb9c8;
+      margin-bottom: 20px;
+    }
+
+    .room {
+      position: relative;
+      width: 100%;
+      height: 520px;
+      overflow: hidden;
+      border: 2px solid #3a485a;
+      border-radius: 18px;
+      background:
+        linear-gradient(
+          to bottom,
+          #263241 0%,
+          #263241 72%,
+          #1c2632 72%,
+          #1c2632 100%
+        );
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+    }
+
+    .floor-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 28%;
+      height: 3px;
+      background: #455466;
+    }
+
+    /* ДВЕРЬ */
+    .door {
+      position: absolute;
+      left: 50%;
+      bottom: 28%;
+      transform: translateX(-50%);
+      width: 170px;
+      height: 260px;
+      border: 5px solid #111923;
+      border-radius: 8px 8px 0 0;
+      background: #465568;
+      cursor: pointer;
+      transition:
+        background 0.35s,
+        transform 0.35s;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .door:hover {
+      background: #53657a;
+    }
+
+    .door.open {
+      background: #111923;
+      transform: translateX(-50%) perspective(500px) rotateY(-55deg);
+      transform-origin: left center;
+    }
+
+    .door-label {
+      position: absolute;
+      top: 18px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+      pointer-events: none;
+    }
+
+    .handle {
+      position: absolute;
+      right: 18px;
+      top: 50%;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #d8b66a;
+      pointer-events: none;
+    }
+
+    /* КЛЮЧ */
+    .key {
+      position: absolute;
+      left: 17%;
+      bottom: 32%;
+      width: 85px;
+      height: 85px;
+      border-radius: 50%;
+      border: 3px solid #d7b65d;
+      background: #f0cc6b;
+      color: #5a4512;
+      font-size: 38px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      transition: transform 0.25s, opacity 0.35s;
+    }
+
+    .key:hover {
+      transform: scale(1.08);
+    }
+
+    .key.found {
+      opacity: 0.35;
+      cursor: default;
+      transform: scale(0.9);
+    }
+
+    /* СВЕТ */
+    .light {
+      position: absolute;
+      right: 17%;
+      top: 15%;
+      width: 85px;
+      height: 85px;
+      border-radius: 50%;
+      border: 3px solid #68788c;
+      background: #344252;
+      color: #aeb9c8;
+      font-size: 38px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+      transition:
+        background 0.3s,
+        border-color 0.3s,
+        transform 0.25s,
+        box-shadow 0.3s;
+    }
+
+    .light:hover {
+      transform: scale(1.08);
+    }
+
+    .light.on {
+      background: #e7c75f;
+      border-color: #ffe88a;
+      color: #fff4bd;
+      box-shadow:
+        0 0 25px rgba(255, 220, 100, 0.6),
+        0 8px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    /* СЕКРЕТНЫЙ ПРЕДМЕТ */
+    .secret {
+      position: absolute;
+      left: 50%;
+      bottom: 34%;
+      transform: translateX(-50%) scale(0.8);
+      width: 100px;
+      height: 100px;
+      border-radius: 18px;
+      background: #7c65d9;
+      border: 3px solid #aa9bf0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 42px;
+      opacity: 0;
+      pointer-events: none;
+      transition:
+        opacity 0.5s,
+        transform 0.5s;
+      box-shadow: 0 0 35px rgba(124, 101, 217, 0.45);
+    }
+
+    .secret.visible {
+      opacity: 1;
+      transform: translateX(-50%) scale(1);
+    }
+
+    /* СООБЩЕНИЕ */
+    .status {
+      min-height: 58px;
+      margin-top: 18px;
+      padding: 16px 20px;
+      border-radius: 12px;
+      background: #253141;
+      border: 1px solid #3b4b60;
+      text-align: center;
+      font-size: 18px;
+      color: #dce5ef;
+    }
+
+    .status.success {
+      background: #203b35;
+      border-color: #4d907d;
+      color: #bce8da;
+    }
+
+    .status.warning {
+      background: #403723;
+      border-color: #806b3d;
+      color: #f0d994;
+    }
+
+    /* КНОПКА НАЧАТЬ ЗАНОВО */
+    .restart {
+      display: none;
+      margin: 15px auto 0;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 10px;
+      background: #596fc4;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .restart:hover {
+      background: #6d83d8;
+      transform: translateY(-2px);
+    }
+
+    .restart.visible {
+      display: block;
+    }
+
+    .legend {
+      display: flex;
+      justify-content: center;
+      gap: 25px;
+      margin-top: 15px;
+      color: #9eabba;
+      font-size: 14px;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 26px;
+      }
+
+      .room {
+        height: 430px;
+      }
+
+      .door {
+        width: 130px;
+        height: 210px;
+      }
+
+      .key,
+      .light {
+        width: 70px;
+        height: 70px;
+        font-size: 30px;
+      }
+
+      .key {
+        left: 10%;
+      }
+
+      .light {
+        right: 10%;
+      }
+
+      .secret {
+        width: 80px;
+        height: 80px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="game">
+
+    <h1>🔐 Секретная комната</h1>
+
+    <div class="subtitle">
+      Найди ключ, включи свет и открой дверь
+    </div>
+
+    <section class="room">
+
+      <!-- Ключ -->
+      <button
+        class="key"
+        id="key"
+        aria-label="Ключ">
+        🔑
+      </button>
+
+      <!-- Свет -->
+      <button
+        class="light"
+        id="light"
+        aria-label="Выключатель света">
+        💡
+      </button>
+
+      <!-- Дверь -->
+      <button
+        class="door"
+        id="door"
+        aria-label="Дверь">
+
+        <span class="door-label">🚪</span>
+        <span class="handle"></span>
+
+      </button>
+
+      <!-- Секретный предмет -->
+      <div
+        class="secret"
+        id="secret"
+        aria-label="Секретный предмет">
+        💎
+      </div>
+
+      <div class="floor-line"></div>
+
+    </section>
+
+    <!-- Сообщения -->
+    <div class="status" id="status">
+      Найди ключ, чтобы начать.
+    </div>
+
+    <!-- Сброс -->
+    <button
+      class="restart"
+      id="restart">
+      🔄 Начать заново
+    </button>
+
+    <div class="legend">
+      <span>🔑 Ключ</span>
+      <span>💡 Свет</span>
+      <span>🚪 Дверь</span>
+      <span>💎 Секретный предмет</span>
+    </div>
+
+  </main>
+
+
+  <script>
+
+    /*
+      СОСТОЯНИЯ ИГРЫ
+    */
+
+    let keyFound = false;
+    let lightOn = false;
+    let doorOpen = false;
+    let questCompleted = false;
+
+
+    /*
+      ПОЛУЧАЕМ ЭЛЕМЕНТЫ
+    */
+
+    const key = document.getElementById("key");
+    const light = document.getElementById("light");
+    const door = document.getElementById("door");
+    const secret = document.getElementById("secret");
+    const status = document.getElementById("status");
+    const restart = document.getElementById("restart");
+
+
+    /*
+      НАХОЖДЕНИЕ КЛЮЧА
+    */
+
+    key.addEventListener("click", function () {
+
+      // Если ключ уже найден, ничего не происходит
+      if (keyFound) {
+        return;
+      }
+
+      keyFound = true;
+
+      key.classList.add("found");
+
+      status.textContent =
+        "🔑 Ключ найден! Теперь включи свет.";
+
+      status.classList.remove("warning");
+      status.classList.add("success");
+
+    });
+
+
+    /*
+      ВКЛЮЧЕНИЕ СВЕТА
+    */
+
+    light.addEventListener("click", function () {
+
+      // Свет уже включён
+      if (lightOn) {
+        return;
+      }
+
+      lightOn = true;
+
+      light.classList.add("on");
+
+      status.textContent =
+        "💡 Свет включён! Теперь можно открыть дверь.";
+
+      status.classList.remove("warning");
+      status.classList.add("success");
+
+    });
+
+
+    /*
+      ОТКРЫТИЕ ДВЕРИ
+    */
+
+    door.addEventListener("click", function () {
+
+      /*
+        ПРОВЕРКА №1
+
+        Нельзя открыть дверь без ключа.
+      */
+
+      if (!keyFound) {
+
+        status.textContent =
+          "💡 Сначала найди ключ.";
+
+        status.classList.remove("success");
+        status.classList.add("warning");
+
+        return;
+      }
+
+
+      /*
+        ПРОВЕРКА №2
+
+        Ключ найден, но свет ещё не включён.
+      */
+
+      if (!lightOn) {
+
+        status.textContent =
+          "💡 Сначала включи свет.";
+
+        status.classList.remove("success");
+        status.classList.add("warning");
+
+        return;
+      }
+
+
+      /*
+        Если дверь уже открыта,
+        повторно ничего не делаем.
+      */
+
+      if (doorOpen) {
+        return;
+      }
+
+
+      /*
+        ВСЕ УСЛОВИЯ ВЫПОЛНЕНЫ
+
+        Открываем дверь.
+      */
+
+      doorOpen = true;
+
+      door.classList.add("open");
+
+
+      /*
+        После открытия двери
+        появляется секретный предмет.
+      */
+
+      secret.classList.add("visible");
+
+
+      /*
+        Квест завершён.
+      */
+
+      questCompleted = true;
+
+      if (questCompleted) {
+
+        status.textContent =
+          "🎉 Квест завершён! Секретная комната открыта!";
+
+        status.classList.remove("warning");
+        status.classList.add("success");
+
+        // Показываем кнопку сброса
+        restart.classList.add("visible");
+      }
+
+    });
+
+
+    /*
+      НАЧАТЬ ЗАНОВО
+    */
+
+    restart.addEventListener("click", function () {
+
+      /*
+        Возвращаем все состояния
+        к первоначальным.
+      */
+
+      keyFound = false;
+      lightOn = false;
+      doorOpen = false;
+      questCompleted = false;
+
+
+      /*
+        Возвращаем визуальное состояние
+        объектов.
+      */
+
+      key.classList.remove("found");
+
+      light.classList.remove("on");
+
+      door.classList.remove("open");
+
+      secret.classList.remove("visible");
+
+
+      /*
+        Скрываем кнопку «Начать заново».
+      */
+
+      restart.classList.remove("visible");
+
+
+      /*
+        Возвращаем начальное сообщение.
+      */
+
+      status.textContent =
+        "Найди ключ, чтобы начать.";
+
+      status.classList.remove("success");
+      status.classList.remove("warning");
+
+    });
+
+  </script>
+
+</body>
+</html>
